@@ -5,10 +5,12 @@ import { Suspense } from "react";
 import PriceForm from "@/components/admin/PriceForm";
 import { getSalesBySize } from "@/lib/admin-data";
 import { getPizza } from "@/lib/data";
+import { requirePermission } from "@/lib/auth";
 
 export default async function ProductDetailPage({
   params,
 }: PageProps<"/admin/products/[id]">) {
+  await requirePermission("products:manage");
   const { id } = await params;
   const pizza = await getPizza(id);
   if (!pizza) notFound();
