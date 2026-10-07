@@ -21,6 +21,9 @@ export default function AdminHome() {
           <Suspense fallback={<WidgetSkeleton title="Status order hari itu" />}>
             <StatusWidget />
           </Suspense>
+          <Suspense fallback={<WidgetSkeleton title="Terlaris sepanjang masa" />}>
+            <TopPizzasWidget />
+          </Suspense>
         </WidgetErrorBoundary>
 
         {/* Cached: the slow all-time aggregate is computed once, not per visit */}
