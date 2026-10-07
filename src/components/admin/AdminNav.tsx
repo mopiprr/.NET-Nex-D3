@@ -9,10 +9,10 @@ const LINKS = [
   { href: "/admin/orders", label: "Order" },
 ];
 
-function NavLinks({ pathname }: { pathname: string | null }) {
+function NavLinks({ pathname, links, }: { pathname: string | null; links: typeof LINKS; }) {
   return (
     <nav className="flex flex-col gap-1 px-3">
-      {LINKS.map(({ href, label }) => {
+      {links.map(({ href, label }) => {
         const active =
           pathname !== null &&
           (href === "/admin" ? pathname === href : pathname.startsWith(href));
@@ -33,12 +33,19 @@ function NavLinks({ pathname }: { pathname: string | null }) {
   );
 }
 
-// The only client part of the sidebar: it needs the current URL to highlight a link
-export default function AdminNav() {
-  return <NavLinks pathname={usePathname()} />;
+export default function AdminNav({
+  canManageProducts = false,
+}: {
+  canManageProducts?: boolean;
+}) {
+  const links = LINKS.filter(
+    (l) => l.href !== "/admin/products" || canManageProducts,
+  );
+  return <NavLinks pathname={usePathname()} links={links} />;
 }
 
 // Shown in the static shell until the URL is known (no link highlighted yet)
 export function AdminNavFallback() {
-  return <NavLinks pathname={null} />;
+  const links = LINKS.filter((l) => l.href !== "/admin/products");
+  return <NavLinks pathname={null} links={links} />;
 }

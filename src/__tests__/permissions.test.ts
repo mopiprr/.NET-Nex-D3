@@ -16,6 +16,13 @@ describe("can", () => {
     expect(can({ role: "staff" }, "orders:update")).toBe(true);
     expect(can({ role: "admin" }, "orders:update")).toBe(true);
   });
+
+  it("only admins can manage products", () => {
+    expect(can(null, "products:manage")).toBe(false);
+    expect(can({ role: "customer" }, "products:manage")).toBe(false);
+    expect(can({ role: "staff" }, "products:manage")).toBe(false);
+    expect(can({ role: "admin" }, "products:manage")).toBe(true);
+  });
 });
 
 describe("orderStatusInput", () => {

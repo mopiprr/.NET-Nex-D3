@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import AdminNav, { AdminNavFallback } from "@/components/admin/AdminNav";
+import { AdminNavFallback } from "@/components/admin/AdminNav";
+import AdminNavigation from "@/components/admin/AdminNavigation";
 import FailureToggle from "@/components/FailureToggle";
 import SidebarUser from "@/components/admin/SidebarUser";
 
@@ -24,7 +25,7 @@ export default function AdminLayout({
         </Link>
         {/* usePathname() is runtime data on dynamic routes like /admin/products/[id] */}
         <Suspense fallback={<AdminNavFallback />}>
-          <AdminNav />
+          <AdminNavigation />
         </Suspense>
         <div className="mt-auto">
           <Suspense fallback={null}>
