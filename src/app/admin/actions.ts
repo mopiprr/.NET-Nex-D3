@@ -10,8 +10,10 @@ import {
 import { pizzaExists } from "@/lib/data";
 import { shouldFail, simulateLatency } from "@/lib/demo";
 import { parsePrice } from "@/lib/format";
-import { canTransition, isOrderStatus, STATUS_LABELS } from "@/lib/orders";
+import { canTransition, STATUS_LABELS } from "@/lib/orders";
 import type { PizzaSize } from "@/lib/types";
+import { requirePermission } from "@/lib/auth";
+import { orderStatusInput } from "@/lib/schemas";
 
 const SIZES: PizzaSize[] = ["S", "M", "L"];
 
@@ -71,13 +73,35 @@ export async function updateOrderStatusAction(
   _prev: StatusFormState,
   formData: FormData,
 ): Promise<StatusFormState> {
-  const orderId = Number(formData.get("orderId"));
-  const next = formData.get("status");
-  if (!Number.isInteger(orderId) || !isOrderStatus(next)) {
+  // 1. Who are you and may you do this? 
+  await requirePermission("orders:update");
+
+  const parsed = orderStatusInput.safeParse({
+    orderId: formData.get("orderId"),
+    status: formData.get("status"),
+  });
+  if (!parsed.success) {
     return { error: "Permintaan tidak valid." };
   }
+  const { orderId, status: next } = parsed.data;
+
+  // const orderId = Number(formData.get("orderId"));
+  // const next = formData.get("status");
+  // if (!Number.isInteger(orderId) || !isOrderStatus(next)) {
+  //   return { error: "Permintaan tidak valid." };
+  // }
 
   // The rule lives on the server: the buttons in the browser are only a hint
+  // const current = await getOrderStatus(orderId);
+  // if (current === null) {
+  //   return { error: "Order tidak ditemukan." };
+  // }
+  // if (!canTransition(current, next)) {
+  //   return {
+  //     error: `Perubahan dari "${STATUS_LABELS[current]}" ke "${STATUS_LABELS[next]}" tidak diizinkan.`,
+  //   };
+  // }
+
   const current = await getOrderStatus(orderId);
   if (current === null) {
     return { error: "Order tidak ditemukan." };

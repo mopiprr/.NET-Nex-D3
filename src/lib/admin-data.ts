@@ -4,6 +4,7 @@ import { all, get, run } from "./db";
 import { failReadIfSimulated, simulateLatency } from "./demo";
 import type { OrderStatus } from "./orders";
 import type { PizzaSize } from "./types";
+import { requirePermission } from "./auth";
 
 // Data access for the staff dashboard (/admin).
 // Staff should see the current state, so almost nothing here is cached.
@@ -82,6 +83,7 @@ export async function getOrders({
   page: number;
   date: string | null;
 }): Promise<{ orders: OrderSummary[]; totalPages: number }> {
+  await requirePermission("admin:view");
   await simulateLatency("read");
   await failReadIfSimulated();
   const offset = (page - 1) * ORDERS_PAGE_SIZE;
@@ -114,6 +116,7 @@ export async function getOrders({
 }
 
 export async function getOrder(id: number): Promise<OrderDetail | null> {
+  await requirePermission("admin:view");
   await simulateLatency("read");
   const order = await get<{
     id: number;
@@ -160,6 +163,7 @@ export async function getLatestDay(): Promise<{
   orders: number;
   revenue: number;
 }> {
+  await requirePermission("admin:view");
   await simulateLatency("read");
   const row = await get<{ date: string; orders: number; revenue: number }>(
     `SELECT o.date, COUNT(DISTINCT o.order_id) AS orders,
@@ -173,17 +177,17 @@ export async function getLatestDay(): Promise<{
   return row ?? { date: "-", orders: 0, revenue: 0 };
 }
 
+type TopPizza = { id: string; name:string; sold: number; revenue: number };
+
 /** All-time best sellers. A heavy aggregate: slow on purpose. */
-export async function getTopPizzas(): Promise<
-  { id: string; name: string; sold: number; revenue: number }[]
-> {
+async function topPizzas(): Promise<TopPizza[]> {
   // History does not change minute to minute: compute it once an hour at most
   "use cache";
   cacheLife("hours");
   cacheTag("sales");
   await simulateLatency("read");
   await new Promise((resolve) => setTimeout(resolve, 1500));
-  return all(
+  return all<TopPizza>(
     `SELECT t.pizza_type_id AS id, t.name, SUM(d.quantity) AS sold,
             ROUND(SUM(d.quantity * p.price), 2) AS revenue
      FROM order_details d
@@ -193,8 +197,15 @@ export async function getTopPizzas(): Promise<
   );
 }
 
+export async function getTopPizzas(): Promise<TopPizza[]> {
+  await requirePermission("admin:view");
+  return topPizzas();
+}
+
+
 /** Orders per status on the latest day. Fails when "Simulasi gagal" is on. */
 export async function getStatusCounts(): Promise<Record<OrderStatus, number>> {
+  await requirePermission("admin:view");
   await simulateLatency("read");
   await failReadIfSimulated();
   const rows = await all<{ status: OrderStatus; n: number }>(
